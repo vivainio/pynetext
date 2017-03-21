@@ -8,7 +8,7 @@ from System import Type, Func
 from System.Linq import Enumerable
 
 
-from pynetext import to_python_object, dump_type
+from pynetext import to_python_object, dump_type, Reflect
 
 def test_conv(o, typ):
     converted = to_python_object(o)
@@ -20,7 +20,7 @@ def test_conv(o, typ):
 
 
 
-def test():
+def test_conversions():
     e = Environment.GetEnvironmentVariables()
     test_conv(e, dict)
 
@@ -54,4 +54,14 @@ def test():
     converted = test_conv(en, list)
     assert u'hellobaz' in converted
 
-test()
+def test_reflection():
+    refl = Reflect(Environment)
+    print refl.methods()
+
+def test_all():
+    test_reflection()
+
+
+if __name__ == "__main__":
+    test_all()
+

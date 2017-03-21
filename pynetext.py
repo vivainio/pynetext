@@ -1,6 +1,7 @@
 import clr
 
 from System import Type
+from System.Reflection import BindingFlags
 
 def _create_dict(d):
     return dict((e.Key, to_python_object(e.Value)) for e in d)
@@ -33,20 +34,45 @@ LOOKUP_CONVERTERS = {
 ENUMERABLE = Type.GetType("System.Collections.IEnumerable")
 
 
-def to_python_object(o):
-    """ convert (possibly) CLR type to native Python equivalent """
+def to_python_object(obj):
+    """ convert (possibly) CLR object to native Python equivalent """
     try:
-        typ = o.GetType()
+        typ = obj.GetType()
     except AttributeError:
         # handles all python types
-        return o
+        return obj
 
     converter = LOOKUP_CONVERTERS.get(typ.Name)
     if converter:
-        return converter(o)
+        return converter(obj)
 
     if ENUMERABLE.IsAssignableFrom(typ):
-        return _create_list(o)
+        return _create_list(obj)
 
     print "no conv", typ, typ.FullName
-    return o
+    return obj
+
+def get_clr_type(typ):
+    """ simulate typeof(T) or GetClrType from IronPython.
+
+    Horrible hack, redo.
+
+    See https://github.com/pythonnet/pythonnet/issues/432
+    """
+    name = typ.__module__ + "." + typ.__name__
+    return Type.GetType(name)
+
+
+class Reflect(object):
+    """ Reflect on a type """
+    def __init__(self, typ):
+        self.typ = get_clr_type(typ)
+
+    def methods(self):
+        """ public methods """
+        return self.typ.GetMethods(
+            BindingFlags.Instance |
+            BindingFlags.Static | BindingFlags.Public)
+
+
+
